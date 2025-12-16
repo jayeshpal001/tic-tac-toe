@@ -11,7 +11,7 @@ interface BoardProps {
 
 const Board = ({ board, onSquareClick, winningLine }: BoardProps) => {
   return (
-    <div className="grid grid-cols-3 gap-2 mt-4">
+    <div className="grid grid-cols-3  mt-4">
       {board.map((value, index) => (
         <Square
           key={index}

@@ -1,150 +1,139 @@
 import { useState } from "react";
-import { Board } from "../components/TicTacToe";
 import {
-  calculateWinnerWithLine,
-  isDraw,
+    Board,
+    ScoreBoard,
+    ResultTable,
+} from "../components/TicTacToe";
+import {
+    calculateWinnerWithLine,
+    isDraw,
 } from "../utils/ticTacToe";
 
 type Player = "X" | "O";
 type BoardType = (Player | null)[];
 
+type ResultItem = {
+    id: number;
+    result: "WIN" | "DRAW";
+    winnerName?: string;
+    symbol?: Player;
+};
+
 const TicTacToe = () => {
-  const [board, setBoard] = useState<BoardType>(Array(9).fill(null));
-  const [currentPlayer, setCurrentPlayer] = useState<Player>("X");
-  const [winner, setWinner] = useState<Player | null>(null);
-  const [winningLine, setWinningLine] = useState<number[] | undefined>();
-  const [draw, setDraw] = useState(false);
+    const [board, setBoard] = useState<BoardType>(Array(9).fill(null));
+    const [currentPlayer, setCurrentPlayer] = useState<Player>("X");
+    const [winner, setWinner] = useState<Player | null>(null);
+    const [winningLine, setWinningLine] = useState<number[] | undefined>();
+    const [draw, setDraw] = useState(false);
 
-  // player names
-  const [players, setPlayers] = useState<Record<Player, string>>({
-    X: "Player 1",
-    O: "Player 2",
-  });
+    const [players, setPlayers] = useState<Record<Player, string>>({
+        X: "Player 1",
+        O: "Player 2",
+    });
 
-  // scoreboard
-  const [score, setScore] = useState({
-    X: 0,
-    O: 0,
-    draw: 0,
-  });
+    const [score, setScore] = useState({ X: 0, O: 0, draw: 0 });
+    const [results, setResults] = useState<ResultItem[]>([]);
 
-  const handleSquareClick = (index: number) => {
-    if (board[index] || winner || draw) return;
+    const handleSquareClick = (index: number) => {
+        if (board[index] || winner || draw) return;
 
-    const newBoard = [...board];
-    newBoard[index] = currentPlayer;
-    setBoard(newBoard);
+        const newBoard = [...board];
+        newBoard[index] = currentPlayer;
+        setBoard(newBoard);
 
-    const result = calculateWinnerWithLine(newBoard);
-    if (result) {
-      setWinner(result.winner);
-      setWinningLine(result.line);
+        const result = calculateWinnerWithLine(newBoard);
+        if (result) {
+            setWinner(result.winner);
+            setWinningLine(result.line);
 
-      setScore(prev => ({
-        ...prev,
-        [result.winner]: prev[result.winner] + 1,
-      }));
+            setScore(prev => ({
+                ...prev,
+                [result.winner]: prev[result.winner] + 1,
+            }));
 
-      return;
-    }
+            setResults(prev => [
+                ...prev,
+                {
+                    id: prev.length + 1,
+                    result: "WIN",
+                    winnerName: players[result.winner],
+                    symbol: result.winner,
+                },
+            ]);
+            return;
+        }
 
-    if (isDraw(newBoard)) {
-      setDraw(true);
+        if (isDraw(newBoard)) {
+            setDraw(true);
+            setScore(prev => ({ ...prev, draw: prev.draw + 1 }));
+            setResults(prev => [
+                ...prev,
+                { id: prev.length + 1, result: "DRAW" },
+            ]);
+            return;
+        }
 
-      setScore(prev => ({
-        ...prev,
-        draw: prev.draw + 1,
-      }));
+        setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
+    };
 
-      return;
-    }
+    const restartGame = () => {
+        setBoard(Array(9).fill(null));
+        setCurrentPlayer("X");
+        setWinner(null);
+        setWinningLine(undefined);
+        setDraw(false);
+    };
 
-    setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
-  };
+    const statusText = winner
+        ? `Winner: ${players[winner]} (${winner})`
+        : draw
+            ? "Match Draw 🤝"
+            : `Next Player: ${players[currentPlayer]} (${currentPlayer})`;
 
-  const restartGame = () => {
-    setBoard(Array(9).fill(null));
-    setCurrentPlayer("X");
-    setWinner(null);
-    setWinningLine(undefined);
-    setDraw(false);
-  };
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 to-blue-100 px-4">
+            <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg max-w-md w-full space-y-4">
 
-  const statusText = winner
-    ? `Winner: ${players[winner]} (${winner})`
-    : draw
-    ? "Match Draw 🤝"
-    : `Next Player: ${players[currentPlayer]} (${currentPlayer})`;
+                {/* Title */}
+                <h1 className="text-3xl font-bold text-center text-purple-700">
+                    Tic Tac Toe
+                </h1>
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-6 rounded-lg shadow-md text-center max-w-sm w-full">
-        <h1 className="text-2xl font-semibold mb-3">
-          Tic Tac Toe
-        </h1>
+                {/* Status */}
+                <p className="text-center font-medium text-gray-700">
+                    {statusText}
+                </p>
 
-        {/* PLAYER NAME INPUTS */}
-        <div className="flex gap-3 mb-4">
-          <input
-            type="text"
-            value={players.X}
-            onChange={(e) =>
-              setPlayers({ ...players, X: e.target.value })
-            }
-            className="border px-3 py-2 rounded-md w-full"
-            placeholder="Player 1 Name"
-          />
+                {/* Score Board */}
+                <div className="border rounded-lg p-3 bg-gray-50">
+                    <ScoreBoard players={players} score={score} />
+                </div>
 
-          <input
-            type="text"
-            value={players.O}
-            onChange={(e) =>
-              setPlayers({ ...players, O: e.target.value })
-            }
-            className="border px-3 py-2 rounded-md w-full"
-            placeholder="Player 2 Name"
-          />
+                {/* Game Board */}
+                <div className="flex justify-center">
+                    <Board
+                        board={board}
+                        onSquareClick={handleSquareClick}
+                        winningLine={winningLine}
+                    />
+                </div>
+
+                {/* Restart Button */}
+                <button
+                    onClick={restartGame}
+                    className="w-full py-2 bg-purple-600 hover:bg-purple-700 transition text-white font-semibold rounded-lg"
+                >
+                    Restart Game
+                </button>
+
+                {/* Result Table */}
+                <div className="border-t pt-3">
+                    <ResultTable results={results} />
+                </div>
+            </div>
         </div>
+    );
 
-        <p className="text-gray-700 font-medium mb-2">
-          {statusText}
-        </p>
-
-        {/* SCOREBOARD */}
-        <div className="flex justify-between bg-gray-100 rounded-md p-3 mb-4 text-sm">
-          <div className="text-center">
-            <p className="font-medium">{players.X} (X)</p>
-            <p className="text-lg font-bold">{score.X}</p>
-          </div>
-
-          <div className="text-center">
-            <p className="font-medium">Draws</p>
-            <p className="text-lg font-bold">{score.draw}</p>
-          </div>
-
-          <div className="text-center">
-            <p className="font-medium">{players.O} (O)</p>
-            <p className="text-lg font-bold">{score.O}</p>
-          </div>
-        </div>
-
-        <Board
-          board={board}
-          onSquareClick={handleSquareClick}
-          winningLine={winningLine}
-        />
-
-        <button
-          onClick={restartGame}
-          className="mt-5 px-4 py-2 rounded-md
-            bg-purple-600 text-white
-            hover:bg-purple-700 transition"
-        >
-          Restart Game
-        </button>
-      </div>
-    </div>
-  );
 };
 
 export default TicTacToe;
