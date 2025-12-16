@@ -15,10 +15,17 @@ const TicTacToe = () => {
   const [winningLine, setWinningLine] = useState<number[] | undefined>();
   const [draw, setDraw] = useState(false);
 
-  // player names 
+  // player names
   const [players, setPlayers] = useState<Record<Player, string>>({
     X: "Player 1",
     O: "Player 2",
+  });
+
+  // scoreboard
+  const [score, setScore] = useState({
+    X: 0,
+    O: 0,
+    draw: 0,
   });
 
   const handleSquareClick = (index: number) => {
@@ -32,11 +39,23 @@ const TicTacToe = () => {
     if (result) {
       setWinner(result.winner);
       setWinningLine(result.line);
+
+      setScore(prev => ({
+        ...prev,
+        [result.winner]: prev[result.winner] + 1,
+      }));
+
       return;
     }
 
     if (isDraw(newBoard)) {
       setDraw(true);
+
+      setScore(prev => ({
+        ...prev,
+        draw: prev.draw + 1,
+      }));
+
       return;
     }
 
@@ -59,7 +78,7 @@ const TicTacToe = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-6 rounded-lg shadow-md text-center w-[360px]">
+      <div className="bg-white p-6 rounded-lg shadow-md text-center max-w-sm w-full">
         <h1 className="text-2xl font-semibold mb-3">
           Tic Tac Toe
         </h1>
@@ -87,9 +106,27 @@ const TicTacToe = () => {
           />
         </div>
 
-        <p className="text-gray-700 font-medium mb-3">
+        <p className="text-gray-700 font-medium mb-2">
           {statusText}
         </p>
+
+        {/* SCOREBOARD */}
+        <div className="flex justify-between bg-gray-100 rounded-md p-3 mb-4 text-sm">
+          <div className="text-center">
+            <p className="font-medium">{players.X} (X)</p>
+            <p className="text-lg font-bold">{score.X}</p>
+          </div>
+
+          <div className="text-center">
+            <p className="font-medium">Draws</p>
+            <p className="text-lg font-bold">{score.draw}</p>
+          </div>
+
+          <div className="text-center">
+            <p className="font-medium">{players.O} (O)</p>
+            <p className="text-lg font-bold">{score.O}</p>
+          </div>
+        </div>
 
         <Board
           board={board}
